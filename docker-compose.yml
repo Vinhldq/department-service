@@ -1,11 +1,44 @@
+version: "3.9"
+
 services:
-  department-service:
-    image: department-service:v1
-    ports:
-      - '${APP_PORT}:${APP_PORT}'
-    environment:
-      - APP_PORT=${APP_PORT}
-      - DB_URL=${DB_URL}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+
     restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: microservice
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  department-service:
+    build: .
+    container_name: department-service
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "8082:8082"
+
+    restart: always
+
+    environment:
+      APP_PORT: ${APP_PORT}
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+volumes:
+  mysql_data:
