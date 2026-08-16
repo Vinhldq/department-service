@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: department-service
-          image: department-service:latest
+          # Thay vì dùng :latest, ta dùng biến để GitHub Actions truyền mã SHA của commit vào
+          image: ${IMAGE_NAME}:${IMAGE_TAG}
           imagePullPolicy: Never
 
           ports:
