@@ -25,17 +25,8 @@ spec:
 
           env:
             - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: department-service-secret
-                  key: DB_URL
+              value: "jdbc:mysql://host.minikube.internal:3306/microservice?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: department-service-secret
-                  key: DB_USERNAME
+              value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: department-service-secret
-                  key: DB_PASSWORD
+              value: "123456"
