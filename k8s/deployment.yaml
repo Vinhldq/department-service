@@ -4,20 +4,26 @@ metadata:
   name: department-service
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: department-service
+
   template:
     metadata:
       labels:
         app: department-service
+
     spec:
       containers:
         - name: department-service
+          # Thay vì dùng :latest, ta dùng biến để GitHub Actions truyền mã SHA của commit vào
           image: ${IMAGE_NAME}:${IMAGE_TAG}
           imagePullPolicy: Never
+
           ports:
             - containerPort: 8082
+
           envFrom:
             - secretRef:
                 name: department-service-secret
