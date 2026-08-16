@@ -48,9 +48,11 @@ jobs:
         run: docker compose up -d
 
   deploy-production:
-    runs-on: [self-hosted]
+    runs-on: [ self-hosted ]
     needs: build
+
     if: github.ref == 'refs/heads/production'
+
     environment: production
 
     env:
@@ -61,31 +63,40 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Check Minikube
+        run: |
+          minikube status
+          kubectl get nodes
 
       - name: Load image into Minikube
         run: minikube image load "${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
 
       - name: Create or update Kubernetes secret
+        shell: powershell
         run: |
-          kubectl create secret generic department-service-secret \
-            --from-literal=APP_PORT="$APP_PORT" \
-            --from-literal=DB_URL="$DB_URL" \
-            --from-literal=DB_USERNAME="$DB_USERNAME" \
-            --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+          kubectl create secret generic department-service-secret `
+            --from-literal=APP_PORT="$env:APP_PORT" `
+            --from-literal=DB_URL="$env:DB_URL" `
+            --from-literal=DB_USERNAME="$env:DB_USERNAME" `
+            --from-literal=DB_PASSWORD="$env:DB_PASSWORD" `
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Render Kubernetes manifests
+      - name: Render Kubernetes deployment
+        shell: powershell
         run: |
-          envsubst < k8s/deployment.yaml > k8s/deployment-rendered.yaml
-          envsubst < k8s/service.yaml > k8s/service-rendered.yaml
+          $deployment = Get-Content k8s/deployment.yaml -Raw
+          $deployment = $deployment.Replace('${IMAGE_NAME}', $env:IMAGE_NAME)
+          $deployment = $deployment.Replace('${IMAGE_TAG}', $env:IMAGE_TAG)
+          $deployment | Set-Content k8s/deployment-rendered.yaml
 
-      - name: Deploy to Minikube
+      - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/deployment-rendered.yaml
-          kubectl apply -f k8s/service-rendered.yaml
+          kubectl apply -f k8s/service.yaml
 
       - name: Restart deployment
         run: |
           kubectl rollout restart deployment/department-service
-          kubectl rollout status deployment/department-service
+          kubectl rollout status deployment/department-service --timeout=120s

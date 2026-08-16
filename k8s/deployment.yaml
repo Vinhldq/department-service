@@ -4,20 +4,25 @@ metadata:
   name: department-service
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: department-service
+
   template:
     metadata:
       labels:
         app: department-service
+
     spec:
       containers:
         - name: department-service
-          image: ${IMAGE_NAME}:${IMAGE_TAG}
+          image: department-service:latest
           imagePullPolicy: Never
+
           ports:
             - containerPort: 8082
+
           envFrom:
             - secretRef:
                 name: department-service-secret
